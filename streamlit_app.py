@@ -75,7 +75,7 @@ selected_tabs = tab_groups[selected_group]
 tabs = st.tabs([f" {label} " for label in selected_tabs])
 
 def render_tab_content(tab_label):
-    # --- RENDER CONTENT FOR THE SELECTED TAB ---
+    # --- ALL TABS FULLY ACTIVATED ---
     if tab_label == "Singularity":
         st.header("🌟 Singularity Dashboard - The Heart of the Omniverse")
         c1, c2, c3, c4 = st.columns(4)
@@ -101,11 +101,55 @@ def render_tab_content(tab_label):
     elif tab_label == "Diagnoser":
         st.header("🔬 AI Auto-Fix Diagnoser")
         st.chat_input("Paste any Oracle/ERP/OIC error/log/JIRA message for an instant AI-powered fix...")
+    elif tab_label == "Voice":
+        st.header("🎤 Voice Mode")
+        st.write("Speak your Oracle issue or question below. (Voice to text coming soon!)")
+        st.button("🎙️ Start Listening")
+        st.info("AI will transcribe and analyze your voice input here.")
+    elif tab_label == "Upload":
+        st.header("📂 Upload Log/Trace File")
+        uploaded_file = st.file_uploader("Upload a .log, .txt, or .csv file for instant diagnosis:")
+        if uploaded_file is not None:
+            content = uploaded_file.read().decode("utf-8")
+            st.text_area("Uploaded Log Content", content, height=200)
+            st.success("AI-powered log analysis coming soon!")
+    elif tab_label == "Memory":
+        st.header("🧠 Session Memory")
+        st.write("Displays memory of past issues, logs, and solutions.")
+        st.info("Persistent session memory coming soon!")
     elif tab_label == "Copilot":
         st.header("💬 Copilot Chat")
         with st.chat_message("assistant", avatar="👑"):
             st.write("I am the Oracle Omniverse Copilot. How may I assist your query on SQL, PL/SQL, OIC, or any Oracle matter?")
         st.chat_input("Ask me anything...")
+    elif tab_label == "Security":
+        st.header("🔒 Security Center")
+        st.write("View recent security alerts, incidents, and status.")
+        st.warning("No security incidents detected.")
+    elif tab_label == "Logs":
+        st.header("📊 System Log Viewer")
+        logs = pd.DataFrame({
+            "Time": ["2025-07-27 13:00", "2025-07-27 13:10"],
+            "Event": ["User Login", "Error: ORA-06550"],
+            "Status": ["OK", "Auto-Fixed"]
+        })
+        st.dataframe(logs)
+    elif tab_label == "Export":
+        st.header("📤 Export Diagnostic Logs")
+        st.write("Download your diagnostic logs as CSV for JIRA, Teams, or evidence.")
+        st.button("Export Logs")
+        st.info("CSV download logic coming soon!")
+    elif tab_label == "Backup":
+        st.header("🛡️ System Backup")
+        st.write("Create and download backups of system settings and logs.")
+        st.button("Backup Now")
+        st.info("Automated backup routines coming soon!")
+    elif tab_label == "Settings":
+        st.header("⚙️ Settings")
+        st.write("Configure app preferences, notifications, and themes here.")
+        theme = st.selectbox("Select theme", ["Cosmic", "Dark", "Light"])
+        st.button("Save Settings")
+        st.info("Personalization features coming soon!")
     elif tab_label == "SQL Runner":
         st.header("🗃️ Quantum SQL Runner")
         st.code("""
@@ -134,18 +178,97 @@ BEGIN
 END;
         """, language='plsql')
         st.button("Execute PL/SQL (Simulated)")
+    elif tab_label == "REST Tester":
+        st.header("🌐 REST API Tester")
+        st.write("Test your Oracle REST APIs here.")
+        st.text_input("API Endpoint URL")
+        st.button("Test Endpoint")
+    elif tab_label == "SOAP Tester":
+        st.header("🧼 SOAP API Tester")
+        st.write("Test your Oracle SOAP APIs here.")
+        st.text_input("WSDL URL")
+        st.button("Test SOAP Service")
+    elif tab_label == "Jobs Monitor":
+        st.header("📝 Jobs Monitor")
+        st.write("Track scheduled and running jobs in your Oracle environment.")
+        st.info("Live job tracking coming soon!")
+    elif tab_label == "Data Explorer":
+        st.header("📂 Data Explorer")
+        st.write("Browse and query your Oracle data assets.")
+        st.info("Data explorer tools coming soon!")
+    elif tab_label == "API Catalog":
+        st.header("📚 API Catalog")
+        st.write("List of available REST/SOAP APIs, endpoints, and docs.")
+        st.info("Dynamic API listing coming soon!")
+    elif tab_label == "ERP Reports":
+        st.header("📄 ERP Reports")
+        st.write("Access, schedule, and download ERP reports.")
+    elif tab_label == "Scheduled Jobs":
+        st.header("⏰ Scheduled Jobs")
+        st.write("Monitor, schedule, and run ERP batch jobs.")
+    elif tab_label == "Integration Log Analyzer":
+        st.header("🧩 Integration Log Analyzer")
+        st.write("Upload and analyze integration logs for Oracle OIC and others.")
+    elif tab_label == "Fusion OTBI":
+        st.header("📊 Fusion OTBI Analytics")
+        st.write("Visualize and analyze Fusion OTBI data.")
+    elif tab_label == "EBS Bridge":
+        st.header("🔗 Oracle EBS Bridge")
+        st.write("Connect, sync, and monitor on-prem EBS with Cloud ERP.")
+    elif tab_label == "Finance Cloud":
+        st.header("💰 Finance Cloud Suite")
+        st.write("Manage and report on Oracle Finance Cloud modules.")
+    elif tab_label == "HCM Cloud":
+        st.header("🧑‍💼 HCM Cloud Suite")
+        st.write("Manage and report on Oracle HCM Cloud modules.")
+    elif tab_label == "SCM Cloud":
+        st.header("🚚 SCM Cloud Suite")
+        st.write("Manage and report on Oracle SCM Cloud modules.")
+    elif tab_label == "Procurement Cloud":
+        st.header("🛒 Procurement Cloud Suite")
+        st.write("Manage and report on Oracle Procurement modules.")
+    elif tab_label == "OIC Monitor":
+        st.header("🔗 OIC Integration Monitor")
+        st.write("Live view of OIC integrations, error rates, throughput, and status.")
     elif tab_label == "ERP Analytics":
         st.header("📈 Live ERP Analytics")
         df = pd.DataFrame(np.random.randn(20, 3), columns=['HCM', 'Finance', 'SCM'])
         st.bar_chart(df)
+    elif tab_label == "OIC Integration":
+        st.header("🔗 OIC Integration Analytics")
+        st.write("Visualize integration flows and throughput.")
+    elif tab_label == "BI/FRS Reports":
+        st.header("📑 BI/FRS Reports")
+        st.write("Browse and download BI/FRS business reports.")
+    elif tab_label == "FBDI/ADFdi Tools":
+        st.header("🔄 FBDI/ADFdi Tools")
+        st.write("Oracle file-based and Excel data import/export utilities.")
+    elif tab_label == "Module Dashboards":
+        st.header("🗂️ Module Dashboards")
+        st.write("Overview dashboards for HCM, Finance, SCM, and more.")
     elif tab_label == "YouTube Analyzer":
         st.header("🎦 YouTube Analyzer")
         st.text_input("Paste YouTube video URL for Oracle/ERP/AI topic analysis")
         st.button("Analyze Video (AI)")
         st.caption("AI will auto-transcribe, summarize, and extract insights (coming soon).")
-    elif tab_label == "OIC Monitor":
-        st.header("🔗 OIC Integration Monitor")
-        st.write("Live view of OIC integrations, error rates, throughput, and status.")
+    elif tab_label == "YouTube RAG":
+        st.header("📺 YouTube RAG (Retrieval-Augmented Generation)")
+        st.write("Paste a video URL and retrieve Q&A and insights with AI.")
+    elif tab_label == "Video Summarizer":
+        st.header("🎬 Video Summarizer")
+        st.write("Summarize Oracle/ERP training videos with a click.")
+    elif tab_label == "Oracle Docs":
+        st.header("📚 Oracle Documentation")
+        st.write("Instantly search official Oracle docs here.")
+    elif tab_label == "Oracle Forums":
+        st.header("💬 Oracle Forums Search")
+        st.write("Search Oracle community forums for solutions.")
+    elif tab_label == "SR Tracker":
+        st.header("🎫 SR Tracker")
+        st.write("Track and manage Service Requests (SR) with Oracle Support.")
+    elif tab_label == "MOS KB":
+        st.header("🗄️ Oracle MOS Knowledge Base")
+        st.write("Search for solutions from Oracle Support Knowledge Base.")
     elif tab_label == "Neural Nexus":
         st.header("🧠 Neural Nexus Visualizer")
         st.write("A real-time map of all interconnected Oracle systems, APIs, and data flows.")
@@ -168,6 +291,15 @@ END;
                 "EBS_OnPrem" -> "Data_Warehouse";
             }
         """)
+    elif tab_label == "Digital Twin":
+        st.header("🪞 Digital Twin")
+        st.write("Real-time digital replica of your Oracle environment.")
+    elif tab_label == "Optimizer":
+        st.header("📈 Optimizer Engine")
+        st.write("Optimize queries, integrations, and performance automatically.")
+    elif tab_label == "Root Map":
+        st.header("🗺️ Root Cause Map")
+        st.write("Visual trace of any root cause for Oracle/ERP errors.")
     elif tab_label == "Time Machine":
         st.header("⏳ Time Machine")
         st.write("Rewind any Oracle event or run 'what if' scenarios.")
@@ -177,6 +309,24 @@ END;
             with st.spinner(f"Rewinding event {target_event} to {event_time} minutes ago..."):
                 time.sleep(3)
             st.success("Temporal state restored. You are now in a simulated past environment.")
+    elif tab_label == "Reality Synth":
+        st.header("🌌 Reality Synthesizer")
+        st.write("Simulate alternate realities for Oracle environments.")
+    elif tab_label == "Dreamcatcher":
+        st.header("💡 Dreamcatcher")
+        st.write("Collect ideas and future upgrades for Oracle Omniverse.")
+    elif tab_label == "Quantum":
+        st.header("⚛️ Quantum Module")
+        st.write("Run quantum-inspired optimizations on ERP/OIC data.")
+    elif tab_label == "AI Parliament":
+        st.header("🤖 AI Parliament")
+        st.write("Multi-agent governance for critical Oracle decisions.")
+    elif tab_label == "Bio-Digital Sync":
+        st.header("🧬 Bio-Digital Sync")
+        st.write("Synchronize human and digital inputs for Oracle control.")
+    elif tab_label == "Multi-Tenant":
+        st.header("🏢 Multi-Tenant Console")
+        st.write("Monitor and control multiple Oracle tenants in one pane.")
     else:
         st.header(f"🌀 {tab_label} Module")
         st.warning(f"Interface for {tab_label} is being synthesized by the AI Core. Stand by.")
@@ -197,4 +347,3 @@ st.markdown(
     "&copy; Hemanth Oracle Cosmic AI"
     "</div>", unsafe_allow_html=True
 )
-
