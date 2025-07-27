@@ -6,3 +6,5 @@ google-api-python-client
 youtube-transcript-api
 requests
 qiskit
+yt-dlp
+whisper
