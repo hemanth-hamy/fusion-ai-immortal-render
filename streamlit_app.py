@@ -1,7 +1,32 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
 import time
+
+# --- Gemini AI Setup ---
+try:
+    from google.generativeai import GenerativeModel, configure
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    if GEMINI_API_KEY:
+        configure(api_key=GEMINI_API_KEY)
+        model = GenerativeModel("gemini-pro")
+    else:
+        model = None
+except Exception as e:
+    model = None
+
+def gemini_ask(prompt, content=None):
+    if model:
+        try:
+            if content:
+                return model.generate_content([prompt, content]).text
+            else:
+                return model.generate_content(prompt).text
+        except Exception as e:
+            return f"⚠️ Gemini error: {e}"
+    else:
+        return "⚠️ Gemini API key missing. Please set the GEMINI_API_KEY environment variable."
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -17,7 +42,6 @@ st.sidebar.title("Fusion AI Ultimate Dashboard")
 st.sidebar.caption("_All Oracle, All AI, All Universe. Infinite Modules._")
 st.sidebar.markdown("---")
 
-# --- MODULE GROUPS ---
 tab_groups = {
     "🌟 Core & AI": [
         "Singularity", "Diagnoser", "Voice", "Upload", "Memory", "Copilot", "Security", "Logs", "Export", "Backup", "Settings"
@@ -44,17 +68,12 @@ tab_groups = {
     ]
 }
 
-all_tabs = []
-for tabs in tab_groups.values():
-    all_tabs.extend(tabs)
-
 st.sidebar.markdown("---")
 selected_group = st.sidebar.radio("Select Module Group:", list(tab_groups.keys()))
 st.sidebar.markdown("---")
 st.sidebar.success("🚀 Quantum Link: **STABLE**")
 st.sidebar.info(f"Omniverse Time: **{time.strftime('%Y-%m-%d %H:%M:%S')} UTC**")
 
-# --- TOP HEADER ---
 col1, col2, col3 = st.columns([3,2,2])
 with col1:
     st.title("Fusion AI Universe")
@@ -83,57 +102,94 @@ def render_tab_content(tab_label):
     elif tab_label == "Diagnoser":
         st.header("🩺 Diagnoser (AI Auto-Fix)")
         msg = st.text_area("Paste any Oracle/ERP/OIC error/log/JIRA:")
-        if st.button("Auto Diagnose & Fix"):
-            st.success("AI fix: Example solution and explanation here.")
+        if st.button("Auto Diagnose & Fix") and msg:
+            with st.spinner("AI analyzing..."):
+                fix = gemini_ask("Diagnose and auto-fix this Oracle/ERP/OIC error. Give fix steps + explanation.", msg)
+            st.success(fix)
 
     elif tab_label == "Voice":
         st.header("🎤 Voice Command Interface")
-        st.info("Voice command with Whisper will be live soon.")
+        st.info("Voice mode coming soon. Type your voice command below.")
+        voice_cmd = st.text_input("Simulated Voice Command")
+        if voice_cmd:
+            st.write("AI Response:", gemini_ask("Oracle AI voice command:", voice_cmd))
 
     elif tab_label == "Upload":
         st.header("📤 Upload Logs, Docs, Images")
         uploaded = st.file_uploader("Upload logs, images, or docs", accept_multiple_files=True)
         if uploaded:
-            st.write(f"{len(uploaded)} files uploaded.")
+            for file in uploaded:
+                st.write(f"**{file.name}** uploaded.")
+                if file.type.startswith("text"):
+                    content = file.read().decode("utf-8")
+                    st.text_area("Preview", content, height=200)
+                    if st.button(f"Ask AI about {file.name}"):
+                        st.write(gemini_ask("Analyze this uploaded Oracle log or document:", content))
+                elif file.type.startswith("image"):
+                    st.image(file, caption=file.name)
 
     elif tab_label == "Memory":
         st.header("🧠 Memory: Persistent Recall")
-        st.write("Recall previous interactions, conversations, and errors.")
+        if "memory" not in st.session_state:
+            st.session_state.memory = []
+        recall = st.text_input("Ask about previous issues/fixes:")
+        if recall:
+            st.session_state.memory.append(recall)
+            st.write("Memory recall:", gemini_ask("Recall and summarize session memory:", "\n".join(st.session_state.memory)))
 
     elif tab_label == "Copilot":
         st.header("🤖 Oracle Copilot Chat")
-        q = st.text_input("Ask Oracle/SQL/ERP/PLSQL/etc:")
-        if st.button("Ask Copilot"):
-            st.info("Copilot (demo): Answer will appear here.")
+        if "chat" not in st.session_state:
+            st.session_state.chat = []
+        query = st.text_input("Ask Oracle/SQL/ERP/PLSQL/etc:")
+        if query:
+            st.session_state.chat.append({"role": "user", "content": query})
+            response = gemini_ask("You are an expert Oracle Copilot. Answer or generate SQL/PLSQL/code:", query)
+            st.session_state.chat.append({"role": "assistant", "content": response})
+        for msg in st.session_state.chat:
+            role = "🧑" if msg["role"] == "user" else "🤖"
+            st.write(f"{role} {msg['content']}")
 
     elif tab_label == "Security":
         st.header("🔒 Security Dashboard")
-        st.write("Live security alerts, anomaly detection, breach simulation.")
+        st.metric("Anomalies Detected", np.random.randint(0, 3))
+        st.line_chart(np.random.randn(30, 2))
+        st.info("No critical security alerts.")
 
     elif tab_label == "Logs":
         st.header("📚 Log Ingestion & Visualization")
-        st.write("Upload, search, and visualize logs.")
-        st.dataframe(pd.DataFrame({"Time": pd.date_range("now", periods=10), "Event": ["Login"]*10}))
+        uploaded = st.file_uploader("Upload log file", type=["txt", "log", "csv"])
+        if uploaded:
+            content = uploaded.read().decode("utf-8")
+            st.text_area("Log Preview", content, height=200)
+            query = st.text_input("Search logs for keyword:")
+            if query:
+                lines = [line for line in content.splitlines() if query.lower() in line.lower()]
+                st.write(f"Found {len(lines)} results.")
+                st.code("\n".join(lines))
 
     elif tab_label == "Export":
         st.header("📤 Export Module")
-        st.write("One-click export of logs/errors/fixes (JIRA-ready).")
-        st.button("Export Now")
+        st.download_button("Export Sample Log", "Sample log data...", "log.txt")
+        st.download_button("Export AI Fixes", "Sample fix text...", "fix.txt")
 
     elif tab_label == "Backup":
         st.header("💾 Backup")
-        st.write("Download backup or store config in cloud (demo).")
-        st.button("Backup Config")
+        st.button("Simulate Cloud Backup")
+        st.button("Download Local Backup")
 
     elif tab_label == "Settings":
         st.header("⚙️ Settings")
-        st.write("Dark mode, AR, user preferences, API settings.")
+        st.toggle("Dark Mode")
+        st.toggle("XR/AR UI")
+        st.write("API keys and preferences are set via environment variables.")
 
     # ---- ORACLE DEVOPS SUITE ----
     elif tab_label == "SQL Runner":
         st.header("🛠️ SQL Runner")
         st.code("SELECT * FROM demo_table WHERE ROWNUM < 10;", language='sql')
-        st.button("Run Query")
+        st.button("Run Query (Demo)")
+        st.write(pd.DataFrame(np.random.randn(10, 3), columns=["COL1", "COL2", "COL3"]))
 
     elif tab_label == "PL/SQL Runner":
         st.header("🔢 PL/SQL Runner")
@@ -229,37 +285,55 @@ def render_tab_content(tab_label):
     # ---- MULTIMODAL & AI EXTENDER ----
     elif tab_label == "YouTube Analyzer":
         st.header("🎦 YouTube Analyzer")
-        url = st.text_input("Paste YouTube video URL")
-        st.button("Analyze Video (AI Demo)")
+        yt_url = st.text_input("Paste YouTube video URL")
+        if st.button("Analyze Video (AI)"):
+            st.warning("Gemini API cannot fetch video directly. Download transcript, then paste here.")
 
     elif tab_label == "YouTube RAG":
         st.header("🔎 YouTube RAG")
-        st.write("Retrieval-Augmented Generation for YouTube Oracle tutorials.")
+        transcript = st.text_area("Paste transcript here")
+        if transcript:
+            st.write("Gemini Q&A:", gemini_ask("Analyze Oracle YouTube video transcript:", transcript))
 
     elif tab_label == "Video Summarizer":
         st.header("✂️ Video Summarizer")
-        st.file_uploader("Upload video to summarize", type=['mp4','mov'])
+        video_text = st.text_area("Paste video transcript here")
+        if video_text:
+            st.write("Gemini Summary:", gemini_ask("Summarize this Oracle-related video transcript:", video_text))
 
     elif tab_label == "Oracle Docs RAG":
         st.header("📄 Oracle Docs RAG")
-        st.write("Search and summarize Oracle docs.")
+        doc_text = st.text_area("Paste Oracle Docs content here")
+        if doc_text:
+            st.write("Gemini RAG Q&A:", gemini_ask("Oracle documentation summary and Q&A:", doc_text))
 
     elif tab_label == "Oracle Forums":
         st.header("💬 Oracle Forums Auto-Search")
-        st.write("Auto-search and summarize best forum answers.")
+        forum = st.text_area("Paste forum thread content")
+        if forum:
+            st.write("AI Summary:", gemini_ask("Best answer from this Oracle forum thread:", forum))
 
     elif tab_label == "SR Tracker":
         st.header("📋 SR Tracker")
-        st.write("Monitor Oracle Support Requests.")
+        st.write("Monitor Oracle Support Requests (demo).")
 
     elif tab_label == "MOS KB Agent":
         st.header("📚 MOS Knowledge Base Agent")
-        st.write("Search My Oracle Support KB via AI prompt.")
+        kb_text = st.text_area("Paste MOS KB content here")
+        if kb_text:
+            st.write("AI Agent Answer:", gemini_ask("Oracle MOS KB Q&A:", kb_text))
 
     # ---- COSMIC & QUANTUM ----
     elif tab_label == "Neural Nexus":
         st.header("🧠 Neural Nexus")
-        st.write("Visualize all Oracle-OIC connections/data flows.")
+        st.graphviz_chart("""
+            digraph {
+                "ERP Cloud" -> "OIC";
+                "OIC" -> "Database";
+                "Database" -> "BI";
+                "BI" -> "User";
+            }
+        """)
 
     elif tab_label == "Digital Twin":
         st.header("👯 Digital Twin")
@@ -267,11 +341,17 @@ def render_tab_content(tab_label):
 
     elif tab_label == "Optimizer":
         st.header("⚡ Optimizer")
-        st.write("Resource optimization for Oracle jobs.")
+        st.write("Resource optimization for Oracle jobs (demo).")
 
     elif tab_label == "Root Map":
         st.header("🌱 Root Map")
-        st.write("Graph of Oracle dependencies.")
+        st.graphviz_chart("""
+            digraph {
+                "FUSION_APP" -> "GL";
+                "GL" -> "AP";
+                "AP" -> "PO";
+            }
+        """)
 
     elif tab_label == "Time Machine":
         st.header("⏳ Time Machine")
@@ -304,7 +384,7 @@ def render_tab_content(tab_label):
     # ---- BONUS / UTILITY ----
     elif tab_label == "Real-Time Alerts":
         st.header("🚨 Real-Time Alerts")
-        st.write("Auto alerts to WhatsApp/SMS/email (demo only).")
+        st.info("Simulated WhatsApp/SMS/email alerts.")
 
     elif tab_label == "JIRA/Teams Integration":
         st.header("📩 JIRA / Teams Integration")
@@ -316,7 +396,8 @@ def render_tab_content(tab_label):
 
     elif tab_label == "Dark Mode + AR UI":
         st.header("🌗 Dark Mode & AR UI")
-        st.write("Toggle UI themes, activate AR visualizations (demo).")
+        st.toggle("Enable Dark Mode")
+        st.toggle("Enable AR UI (Concept)")
 
     elif tab_label == "Agent Feedback Metrics":
         st.header("📊 Agent Feedback Metrics")
@@ -340,5 +421,6 @@ st.markdown(
     "&copy; Hemanth Oracle Cosmic AI"
     "</div>", unsafe_allow_html=True
 )
+
 
 
