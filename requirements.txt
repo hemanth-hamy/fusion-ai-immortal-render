@@ -9,3 +9,5 @@ qiskit
 yt-dlp
 whisper
 google-generativeai
+
+
