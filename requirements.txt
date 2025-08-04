@@ -2,12 +2,10 @@ streamlit
 pandas
 numpy
 python-docx
-openai
 google-generativeai
+openai
+SpeechRecognition
+pyaudio==0.2.11
 python-dotenv
 langdetect
-googletrans==4.0.0rc1
-speechrecognition
-whisper
-sounddevice
-scipy
+googletrans==4.0.0-rc1
