@@ -11,10 +11,8 @@ from dotenv import load_dotenv
 
 # ==== LOAD KEYS SECURELY ====
 load_dotenv()
-GEMINI_API_KEY = os.getenv("AIzaSyB710cbSHrgzOdToOkyIssd-rYOp5Si6Ks
-")
-OPENAI_API_KEY = os.getenv("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
-")
+GEMINI_API_KEY = "AIzaSyB710cbSHrgzOdToOkyIssd-rYOp5Si6Ks"
+OPENAI_API_KEY = "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"
 
 # ==== GEMINI CONFIG ====
 genai_model_name = "models/gemini-1.5-pro-latest"
