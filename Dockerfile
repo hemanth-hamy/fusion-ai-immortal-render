@@ -1,22 +1,28 @@
+# Base image with Python 3.10 (compatible with pyaudio and streamlit)
 FROM python:3.10-slim
 
-WORKDIR /app
-
-# Install OS-level dependencies
-RUN apt-get update && \
-    apt-get install -y \
-    gcc \
-    libasound-dev \
+# System-level dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
     portaudio19-dev \
     ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    libmagic-dev \
+    git \
+    && apt-get clean
 
-# Install Python dependencies
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
+# Copy all app code
 COPY . .
 
-# Run the app
-CMD ["streamlit", "run", "streamlit_app.py", "--server.port=10000", "--server.enableCORS=false"]
+# Expose Streamlit port
+EXPOSE 8501
+
+# Streamlit entrypoint
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8501", "--server.enableXsrfProtection=false"]
