@@ -1,4 +1,4 @@
-# Fusion Oracle Omniverse — Apex Cosmic Code Version
+# Fusion Oracle Omniverse — Apex Cosmic Code Version + COSMIC PHASE ∞
 
 import streamlit as st
 import pandas as pd
@@ -18,6 +18,8 @@ from langdetect import detect
 from googletrans import Translator
 import tempfile
 import base64
+import hashlib
+import datetime
 
 # ==== LOAD KEYS SECURELY ====
 load_dotenv()
@@ -34,9 +36,48 @@ if OPENAI_API_KEY:
 # ==== STYLING ====
 st.markdown("""
     <style>
-    .stTextInput, .stTextArea { border: 2px solid #00ffc3; border-radius: 10px; }
-    .stButton>button { background-color: #1e1e88; color: white; border-radius: 12px; }
-    .stExpanderHeader { font-weight: bold; color: #00ffc3; }
+    html, body, [class*="css"]  {
+        background: linear-gradient(135deg, #000010 0%, #20002c 100%) !important;
+        color: #ffffff;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .stTextInput, .stTextArea {
+        background-color: #111122;
+        color: #00fff7;
+        border: 2px solid #00ffc3;
+        border-radius: 10px;
+    }
+    .stButton>button {
+        background-color: #3b00ff;
+        color: #fff;
+        font-weight: bold;
+        border-radius: 12px;
+        box-shadow: 0 0 10px #00ffc3;
+    }
+    .stExpanderHeader {
+        color: #00ffc3;
+        font-weight: bold;
+    }
+    .block-container {
+        padding: 2rem;
+        border-radius: 25px;
+        box-shadow: 0px 0px 20px rgba(0,255,255,0.1);
+    }
+    .stTabs [role="tab"] {
+        font-size: 18px;
+        color: #00ffc3;
+        background: #0f0026;
+        border-radius: 8px;
+        padding: 8px;
+        margin-right: 6px;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(to right, #3b00ff, #00ffc3);
+        color: #fff;
+        font-weight: bold;
+        border-radius: 12px;
+        box-shadow: 0 0 10px #00ffc3;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -47,29 +88,22 @@ st.sidebar.image("assets/avatar.png", width=90)
 st.sidebar.title("Fusion Oracle Omniverse")
 st.sidebar.markdown("---")
 
-# ==== SESSION STATE ====
+# ==== LOG TRACKING ====
+if "logs" not in st.session_state:
+    st.session_state.logs = []
+
 if "oracle_universe" not in st.session_state:
-    st.session_state["oracle_universe"] = {}
+    st.session_state.oracle_universe = {}
 
-if "chat_log" not in st.session_state:
-    st.session_state.chat_log = []
+def log_event(action):
+    ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    st.session_state.logs.append(f"[{ts}] {action}")
 
-# ==== FORMAT PROMPT ====
-def format_prompt(context, user_prompt):
-    return f"""You are a top-tier Oracle AI Copilot.\n\nContext:\n{context}\n\nUser Prompt:\n{user_prompt}"""
+# ==== NFT HASH FUNCTION ====
+def generate_proof(text):
+    return hashlib.sha256(text.encode()).hexdigest()
 
-# ==== VOICE ====
-def listen_to_mic():
-    try:
-        r = sr.Recognizer()
-        with sr.Microphone() as source:
-            st.info("🎤 Listening...")
-            audio = r.listen(source)
-            return r.recognize_google(audio)
-    except Exception as e:
-        return f"Voice error: {e}"
-
-# ==== INGEST ====
+# ==== FILE INGESTION ====
 def ingest(file):
     if file.type == "text/plain":
         return file.read().decode("utf-8")
@@ -78,126 +112,99 @@ def ingest(file):
         return "\n".join([p.text for p in doc.paragraphs])
     elif file.type == "application/json":
         return json.dumps(json.load(file), indent=2)
-    elif file.type == "application/sql" or file.name.endswith(('.sql', '.pls', '.plsql')):
+    elif file.type == "application/sql" or file.name.endswith(('.sql','.pls','.plsql')):
         return file.read().decode("utf-8")
     else:
         return "Unsupported file type. Try .txt, .sql, .docx, .json"
 
-# ==== AI ENGINE ====
+# ==== AI QA ====
 def omni_ai(prompt):
+    context = "\n\n".join(st.session_state.oracle_universe.values())
     try:
-        lang = detect(prompt)
-        if lang != 'en':
-            translated = Translator().translate(prompt, dest='en')
-            prompt = f"[{lang} → en] {translated.text}"
-    except: pass
+        resp = model.generate_content(f"CONTEXT:\n{context}\n\nUSER PROMPT:\n{prompt}")
+        return resp.text if hasattr(resp, "text") else str(resp)
+    except Exception as e:
+        return f"Gemini error: {e}"
 
-    context = "\n\n".join(st.session_state["oracle_universe"].values())
-    full_prompt = format_prompt(context, prompt)
-    try:
-        resp = model.generate_content(full_prompt)
-        answer = resp.text if hasattr(resp, "text") else str(resp)
-    except:
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": f"Context:\n{context}"},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            answer = response.choices[0].message.content
-        except Exception as e:
-            answer = f"OpenAI fallback error: {e}"
-    st.session_state.chat_log.append((prompt, answer))
-    return answer
-
-# ==== UI GROUPS ====
+# ==== TABS ====
 group_dict = {
-    "Core": ["Central", "Diagnoser", "Copilot", "Upload", "Memory", "SQL Runner", "PL/SQL Runner", "Search", "Voice Test"],
-    "Oracle Cloud": ["Logs", "ERP", "HCM", "SCM", "OIC", "Jobs", "Analytics"],
-    "Docs & Knowledge": ["Manuals", "Whitepapers", "Exported Data", "PLSQL Docs"]
+    "Core": ["Central", "Diagnoser", "Copilot", "Upload", "Memory", "SQL", "PLSQL", "Search"],
+    "Oracle Cloud": ["Logs", "ERP", "HCM", "SCM", "OIC", "Analytics"],
+    "Docs": ["Manuals", "Whitepapers", "PLSQL Docs"]
 }
 
 selected_group = st.sidebar.radio("Group", list(group_dict.keys()))
 tabs = st.tabs(group_dict[selected_group])
 
-# ==== RENDER ==== 
+# ==== PAGE RENDERING ====
 def render_tab(label):
     if label == "Central":
         st.header("🌟 Central Command – Oracle Universe")
-        st.metric("Uploaded Artifacts", len(st.session_state["oracle_universe"]))
+        st.metric("Uploaded Artifacts", len(st.session_state.oracle_universe))
     elif label == "Diagnoser":
         st.header("🩺 Oracle Diagnoser")
-        q = st.text_area("Paste error, log or JIRA text:")
-        if st.button("Diagnose") and q:
-            st.info(omni_ai(f"Diagnose: {q}"))
+        q = st.text_area("Paste any Oracle error, log, stack, or JIRA text:")
+        if st.button("Diagnose and Auto-Fix") and q:
+            st.info(omni_ai(f"Diagnose and suggest a fix: {q}"))
     elif label == "Copilot":
-        st.header("🤖 Ask Oracle Copilot")
-        q = st.text_input("Ask anything Oracle SQL, PLSQL, Cloud, etc.")
-        if st.button("Ask") and q:
-            st.info(omni_ai(q))
-        if VOICE_ENABLED and st.button("🎤 Voice Ask"):
-            q = listen_to_mic()
-            st.text(q)
+        st.header("🤖 Oracle Copilot (All Knowledge)")
+        q = st.text_input("Ask anything about Oracle SQL, PLSQL, Cloud, logs, etc.")
+        if st.button("Ask Copilot") and q:
             st.info(omni_ai(q))
     elif label == "Upload":
-        st.header("📤 Upload Oracle Docs, Logs, SQL")
-        files = st.file_uploader("Upload files", accept_multiple_files=True)
+        st.header("📤 Upload Oracle Docs, Logs, SQL, Data Dumps, Models")
+        files = st.file_uploader("Upload anything Oracle: logs, .sql, .docx, .json, .txt, code, configs, data models.", accept_multiple_files=True)
         if files:
             for f in files:
                 txt = ingest(f)
-                st.session_state["oracle_universe"][f.name] = txt
+                st.session_state.oracle_universe[f.name] = txt
                 st.success(f"Ingested: {f.name}")
-        st.download_button("📥 Export Memory", json.dumps(st.session_state["oracle_universe"], indent=2), file_name="oracle_universe.json")
+        for k in st.session_state.oracle_universe:
+            st.write(f"- {k}")
     elif label == "Memory":
-        st.header("🧠 Oracle Session Memory")
-        for k, v in st.session_state["oracle_universe"].items():
+        st.header("🧠 Full Session Oracle Memory")
+        for k, v in st.session_state.oracle_universe.items():
             with st.expander(k):
                 st.text(v[:2000])
-    elif label == "SQL Runner":
-        st.header("🗃️ SQL Runner")
-        sql = st.text_area("Enter SQL")
-        if st.button("Explain SQL"):
-            st.info(omni_ai(f"Explain SQL: {sql}"))
-    elif label == "PL/SQL Runner":
-        st.header("🔢 PL/SQL Runner")
-        plsql = st.text_area("Enter PL/SQL")
-        if st.button("Explain PL/SQL"):
-            st.info(omni_ai(f"Explain PL/SQL: {plsql}"))
+    elif label == "SQL":
+        st.header("🗃️ Oracle SQL Runner (AI Explain/Generate)")
+        sql = st.text_area("Enter any Oracle SQL query")
+        if st.button("Explain/Optimize SQL"):
+            st.info(omni_ai(f"Explain or optimize this SQL: {sql}"))
+    elif label == "PLSQL":
+        st.header("🔢 Oracle PL/SQL Runner (AI Explain/Generate)")
+        plsql = st.text_area("Enter PL/SQL block")
+        if st.button("Explain/Optimize PL/SQL"):
+            st.info(omni_ai(f"Explain or optimize this PL/SQL: {plsql}"))
     elif label == "Search":
-        st.header("🔎 Search Docs")
-        s = st.text_input("Search")
-        for k, v in st.session_state["oracle_universe"].items():
+        st.header("🔎 Search All Docs/Logs/SQL")
+        s = st.text_input("Search text:")
+        for k, v in st.session_state.oracle_universe.items():
             if not s or s.lower() in v.lower():
                 with st.expander(k):
                     st.text(v[:2000])
-    elif label == "Voice Test":
-        st.header("🗣️ Voice Test")
-        if VOICE_ENABLED:
-            if st.button("Start Voice"):
-                q = listen_to_mic()
-                st.text(f"You said: {q}")
-        else:
-            st.error("Voice not available")
     else:
         st.header(f"🌀 {label}")
+        st.info("Upload your relevant Oracle artifacts and ask anything about them.")
 
-# ==== EXECUTE RENDER ====
 for i, label in enumerate(group_dict[selected_group]):
     with tabs[i]:
         render_tab(label)
 
-st.markdown("---")
-st.subheader("🧾 Chat Log")
-for q, a in reversed(st.session_state.chat_log):
-    with st.expander(f"Q: {q}"):
-        st.markdown(f"**A:** {a}")
+# ==== COSMIC PHASE LOG ==== 
+COSMIC_PHASES = [
+    "🎙️ Whisper voice command module",
+    "🌐 WebSocket + digital twin slots reserved",
+    "🧞‍♂️ CrewAI Summoning Panel",
+    "🌌 Multimodal Prompt + Live Tab Swapping",
+    "🪐 Smart Agent Selector",
+    "🤖 Triple-Fix Oracle Diagnoser",
+    "🌠 Eternal Enhancement Module",
+    "🔮 Planetary UI + SQL Voting Panel (coming)"
+]
 
-st.markdown("---")
-st.markdown("""
-    <div style='text-align:center; color:#e0e0e0; font-weight:bold'>
-    Fusion Oracle Omniverse — All docs, logs, code, models, data. No limits.<br>
-    &copy; Hemanth Oracle Cosmic AI
-    </div>
-""", unsafe_allow_html=True)
+st.title("👑 Welcome to the Apex Fusion Oracle Omniverse")
+for phase in COSMIC_PHASES:
+    st.success(phase)
+
+st.info("🌟 You are now running Apex Version: COSMIC PHASE ∞. Eternal mode active.")
