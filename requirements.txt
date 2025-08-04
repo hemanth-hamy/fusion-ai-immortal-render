@@ -10,8 +10,10 @@ yt-dlp
 whisper
 google-generativeai
 python-docx
+SpeechRecognition
+pyaudio==0.2.11
+portaudio19-dev
 sounddevice
 scipy
 langdetect
 googletrans==4.0.0-rc1
-streamlit-webrtc
